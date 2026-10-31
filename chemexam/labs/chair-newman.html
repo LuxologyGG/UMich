@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chair to Newman Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: companion to Bond Rotation Lab. 3D chair on the left with one "turn your head" slider, the paper Newman and a plain-English readout on the right, a guided run below. */
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6875;
+  --line: #d3dae1;
+  --c1: #a35f00;
+  --c2: #2457b3;
+  --ring: #5b6875;
+  --accent: #b86e00;
+  --scene: #f7f9fb;
+  --atom-c1: #c27a12;
+  --atom-c2: #2457b3;
+  --atom-c: #4a5561;
+  --atom-cl: #2fa463;
+  --atom-br: #9b2f22;
+  --atom-h: #f4f4f1;
+  --atom-bond: #8a95a2;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141a; --panel: #161d25; --ink: #e5ebf1; --muted: #93a1af; --line: #2a3541;
+    --c1: #f2b24c; --c2: #7ea8ff; --ring: #93a1af; --accent: #f2b24c;
+    --scene: #dfe5eb; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141a; --panel: #161d25; --ink: #e5ebf1; --muted: #93a1af; --line: #2a3541;
+  --c1: #f2b24c; --c2: #7ea8ff; --ring: #93a1af; --accent: #f2b24c;
+  --scene: #dfe5eb; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 18px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px; }
+header { display: grid; gap: 4px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 1.7rem; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 72ch; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.stage { position: relative; height: 480px; overflow: hidden; border-radius: 10px 10px 0 0; background: var(--scene); }
+@media (max-width: 560px) { .stage { height: 370px; } }
+#gl { display: block; width: 100%; height: 100%; touch-action: none; }
+#labels { position: absolute; inset: 0; pointer-events: none; }
+.lbl { position: absolute; transform: translate(-50%, -50%); font-family: var(--mono); font-size: 12px; font-weight: 500;
+  padding: 1px 5px; border-radius: 4px; white-space: nowrap; color: #17212b; background: rgba(255,255,255,0.84); }
+.lbl.c1 { color: #8a4f00; }
+.lbl.c2 { color: #2457b3; }
+.lbl.hal { color: #17683f; }
+.lbl.carbon { font-family: var(--display); font-size: 12.5px; font-weight: 600; }
+.viewtag { position: absolute; left: 10px; top: 10px; font-family: var(--mono); font-size: 12px; color: #4b5763;
+  background: rgba(255,255,255,0.88); border: 1px solid #c9d1d9; border-radius: 6px; padding: 3px 8px; max-width: calc(100% - 20px); }
+.legend { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; font: 500 12px var(--body); color: #17212b;
+  background: rgba(255,255,255,0.88); border-radius: 6px; padding: 3px 8px; max-width: calc(100% - 20px); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.controls { display: grid; gap: 10px; padding: 12px; border-top: 1px solid var(--line); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: 500 0.92rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 7px; padding: 7px 11px; cursor: pointer; }
+button:hover { border-color: var(--c2); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--c2); border-color: var(--c2); color: var(--panel); }
+button.flip { border-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+label.slider { display: flex; gap: 10px; align-items: center; flex: 1 1 280px; min-width: 0; font-size: 0.9rem; color: var(--muted); }
+.slider .end { font-family: var(--mono); font-size: 0.78rem; white-space: nowrap; }
+input[type=range] { flex: 1; min-width: 0; accent-color: var(--c2); }
+.side { display: grid; gap: 14px; min-width: 0; }
+.side .card { padding: 12px 14px; display: grid; gap: 8px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 1.05rem; margin: 0; letter-spacing: 0.02em; }
+#newman { width: 100%; max-width: 300px; height: auto; justify-self: center; }
+.state { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font: 600 0.78rem var(--display); letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.c1 { color: var(--c1); border-color: var(--c1); }
+.pill.c2 { color: var(--c2); border-color: var(--c2); }
+.read { margin: 0; padding-left: 18px; font-size: 0.92rem; display: grid; gap: 3px; }
+.read .f { color: var(--c1); }
+.read .b { color: var(--c2); }
+.read b { font-weight: 600; }
+.rules { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92rem; }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 7px; font-size: 0.94rem; max-width: 95ch; }
+.note { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Chair to Newman Lab</h1>
+    <p class="sub">One chair, one bond. Slide from the chair view to looking straight down C1 to C2 and watch where every bond ends up on the paper Newman. Two example molecules, neither one a checkpoint item. Example 1 looks into the page, Example 2 looks out of it.</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="stage">
+        <canvas id="gl" aria-label="3D model of a substituted cyclohexane chair"></canvas>
+        <div id="labels"></div>
+        <div class="viewtag" id="viewtag">chair view</div>
+        <div class="legend" aria-hidden="true">
+          <span><i style="background:#c27a12"></i>C1, front</span>
+          <span><i style="background:#2457b3"></i>C2, back</span>
+          <span id="legHal"><i style="background:#2fa463"></i>Cl</span>
+          <span><i style="background:#4a5561"></i>other C</span>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <div class="seg" role="group" aria-label="Example molecule">
+            <button id="ex1" aria-pressed="true">Example 1: into the page</button>
+            <button id="ex2" aria-pressed="false">Example 2: out of the page</button>
+          </div>
+        </div>
+        <div class="row">
+          <button id="btnChair">Chair view</button>
+          <button id="btnNewman" class="primary">Look down C1 → C2</button>
+          <button id="btnFlip" class="flip">Ring flip</button>
+          <button id="btnH" aria-pressed="false">Other H's off</button>
+          <button id="btnLabels" aria-pressed="true">Labels on</button>
+        </div>
+        <div class="row">
+          <label class="slider" for="head"><span class="end">chair</span><input id="head" type="range" min="0" max="100" step="1" value="0" aria-label="Turn your head from the chair view to the Newman view"><span class="end">down C1 → C2</span></label>
+        </div>
+        <p class="note">Turn your head with the slider. Dragging the model gives a free view; press a view button to snap back.</p>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2>What you would draw on paper</h2>
+        <svg id="newman" viewBox="-150 -150 300 300" role="img" aria-label="Newman projection down C1 to C2"></svg>
+        <div class="state" id="state"></div>
+        <ul class="read" id="read"></ul>
+      </div>
+      <div class="card">
+        <h2>Four rules</h2>
+        <ol class="rules">
+          <li>Axial is straight up or straight down in the chair, so it lands at 12 or 6 o'clock.</li>
+          <li>Find the ring side next. If your eye looks into the page (toward the back edge), the paper's left is the Newman's left. If your eye looks out of the page (toward the front edge), left and right swap.</li>
+          <li>The ring bond goes to the slanted spot on the ring side.</li>
+          <li>The equatorial group takes the slanted spot on the other side, away from the ring.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:12px 14px; display:grid; gap:8px;">
+    <h2>Guided run, about 5 minutes</h2>
+    <ol class="steps">
+      <li>Example 1, <b>Chair view</b>. C1 (orange) is the right tip and C2 (blue) is the next carbon along the back edge. Your eye sits behind C1 and looks toward C2, which is deeper into the page.</li>
+      <li>Drag the slider slowly to the end while you watch the axial Cl. It points straight up the whole way, so it lands at 12. C2's axial H points down the whole way, so it lands at 6.</li>
+      <li>Look where the ring went. On paper the ring is to the left of C1, and since you looked into the page it stays on the left of the Newman. CH<sub>3</sub>, the equatorial group, goes to the slanted spot on the right.</li>
+      <li>Switch to <b>Example 2</b> and do the same slide. Now C1 is the left tip and C2 is on the front edge, so your eye looks out of the page, toward you. On paper the ring is to the right of C1, but on the Newman it lands on the left. Left and right swapped because you turned around.</li>
+      <li>Press <b>Ring flip</b> in either example and slide again. Axial and equatorial swap, up and down stay the same.</li>
+    </ol>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const norm = a => ((a % 360) + 360) % 360;
+  const clock = a => { const h = Math.round(norm(a) / 30) % 12; return (h === 0 ? 12 : h) + " o'clock"; };
+
+  const PRESETS = {
+    ex1: { F: 0, B: 1, subs: { 0: { up: 'Cl', dn: 'CH3' }, 1: { up: 'H', dn: 'H' } }, hal: ['#2fa463', 'Cl'] },
+    ex2: { F: 3, B: 4, subs: { 3: { up: 'Br', dn: 'H' }, 4: { up: 'CH3', dn: 'H' } }, hal: ['#9b2f22', 'Br'] }
+  };
+  const S = { preset: 'ex1', flip: 1, head: 0, free: false, labels: true, allH: false };
+  const PR = () => PRESETS[S.preset];
+  const RR = 1.457, HH = 0.25;
+
+  const canvas = document.getElementById('gl');
+  const stage = canvas.parentElement;
+  const labelsEl = document.getElementById('labels');
+  const hasGL = !!window.THREE;
+  if (!hasGL) stage.insertAdjacentHTML('beforeend', '<p class="note" style="position:absolute;left:12px;right:12px;bottom:48px">The 3D library did not load. Reload the page; the paper drawing on the right still works.</p>');
+  const v = (x, y, z) => new THREE.Vector3(x, y, z);
+
+  function ringPos(k, s) { const a = k * Math.PI / 3; return v(RR * Math.cos(a), s * HH * (k % 2 === 0 ? 1 : -1), -RR * Math.sin(a)); }
+  function radialDir(k) { const a = k * Math.PI / 3; return v(Math.cos(a), 0, -Math.sin(a)); }
+  function groupDirs(k, s) {
+    const t = s * (k % 2 === 0 ? 1 : -1);
+    const rd = radialDir(k);
+    const eqUp = rd.clone().multiplyScalar(0.943).add(v(0, 0.333, 0)).normalize();
+    const eqDn = rd.clone().multiplyScalar(0.943).add(v(0, -0.333, 0)).normalize();
+    const w = (1 + t) / 2;
+    return { up: eqUp.clone().lerp(v(0, 1, 0), w).normalize(), dn: v(0, -1, 0).lerp(eqDn, w).normalize(), upAxial: t > 0 };
+  }
+
+  let renderer, scene, camera, controls, molecule;
+  if (hasGL) {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.75); d1.position.set(-4, 7, 6); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xffffff, 0.35); d2.position.set(6, -3, -5); scene.add(d2);
+    molecule = new THREE.Group(); scene.add(molecule);
+    controls = new THREE.OrbitControls(camera, canvas);
+    controls.enableDamping = false; controls.minDistance = 5; controls.maxDistance = 18;
+    controls.addEventListener('start', () => { S.free = true; setTag(); });
+  }
+
+  const geoS = hasGL ? new THREE.SphereGeometry(1, 28, 20) : null;
+  const geoC = hasGL ? new THREE.CylinderGeometry(1, 1, 1, 16) : null;
+  const mats = {};
+  function mat(key, color, opacity) {
+    if (!mats[key]) mats[key] = new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.05, transparent: opacity < 1, opacity: opacity == null ? 1 : opacity });
+    else mats[key].color.set(color);
+    return mats[key];
+  }
+  function sphere(p, r, m) { const s = new THREE.Mesh(geoS, m); s.position.copy(p); s.scale.set(r, r, r); molecule.add(s); }
+  function stick(a, b, m, r) {
+    const d = b.clone().sub(a); const len = d.length();
+    const c = new THREE.Mesh(geoC, m); c.position.copy(a.clone().add(b).multiplyScalar(0.5)); c.scale.set(r, len, r);
+    c.quaternion.setFromUnitVectors(v(0, 1, 0), d.normalize()); molecule.add(c);
+  }
+  function methylHs(cMe, cParent) {
+    const u = cMe.clone().sub(cParent).normalize();
+    const p = Math.abs(u.z) < 0.9 ? v(0, 0, 1) : v(1, 0, 0);
+    const e1 = p.clone().cross(u).normalize(), e2 = u.clone().cross(e1).normalize(), out = [];
+    for (let k = 0; k < 3; k++) {
+      const ph = k * 2 * Math.PI / 3 + 0.5, c = Math.cos(Math.PI - 1.9106), s = Math.sin(Math.PI - 1.9106);
+      out.push(cMe.clone().add(u.clone().multiplyScalar(c).add(e1.clone().multiplyScalar(s * Math.cos(ph))).add(e2.clone().multiplyScalar(s * Math.sin(ph))).multiplyScalar(0.95)));
+    }
+    return out;
+  }
+
+  let labelItems = [];
+  function build() {
+    if (!hasGL) return;
+    while (molecule.children.length) molecule.remove(molecule.children[molecule.children.length - 1]);
+    labelItems = [];
+    const s = S.flip, pr = PR(), FK = pr.F, BK = pr.B;
+    const mC1 = mat('c1', css('--atom-c1')), mC2 = mat('c2', css('--atom-c2')), mC = mat('c', css('--atom-c'));
+    const mCl = mat('cl', css('--atom-cl')), mBr = mat('br', css('--atom-br')), mH = mat('h', css('--atom-h')), mB = mat('b', css('--atom-bond'));
+    const mHf = mat('hf', css('--atom-h'), 0.55), mBf = mat('bf', css('--atom-bond'), 0.45), mAxis = mat('axis', css('--accent'));
+    const P = [0, 1, 2, 3, 4, 5].map(k => ringPos(k, s));
+    P.forEach((p, k) => sphere(p, (k === FK || k === BK) ? 0.27 : 0.23, k === FK ? mC1 : k === BK ? mC2 : mC));
+    P.forEach((p, k) => { const n = (k + 1) % 6; const axis = (k === FK && n === BK) || (k === BK && n === FK); stick(p, P[n], axis ? mAxis : mB, axis ? 0.12 : 0.1); });
+    labelItems.push({ p: P[FK].clone().add(radialDir(FK).multiplyScalar(0.5)).add(v(0, -0.42, 0.2)), t: 'C1', cls: 'c1 carbon', carbon: true });
+    labelItems.push({ p: P[BK].clone().add(radialDir(BK).multiplyScalar(0.55)).add(v(0, -0.35, 0)), t: 'C2', cls: 'c2 carbon', carbon: true });
+    P.forEach((C, k) => {
+      const sub = pr.subs[k] || (S.allH ? { up: 'H', dn: 'H' } : null);
+      if (!sub) return;
+      const faded = !pr.subs[k];
+      const d = groupDirs(k, s);
+      const cls = k === FK ? 'c1' : 'c2';
+      const bondMat = k === FK ? mC1 : k === BK ? mC2 : mBf;
+      [[d.up, sub.up, d.upAxial], [d.dn, sub.dn, !d.upAxial]].forEach(([dir, type, axial]) => {
+        const role = axial ? 'ax' : 'eq';
+        if (type === 'Cl' || type === 'Br') {
+          const p = C.clone().add(dir.clone().multiplyScalar(type === 'Br' ? 1.9 : 1.75));
+          stick(C, p, bondMat, 0.08); sphere(p, type === 'Br' ? 0.46 : 0.42, type === 'Br' ? mBr : mCl);
+          labelItems.push({ p: p.clone().add(dir.clone().multiplyScalar(0.82)), t: type + ' (' + role + ')', cls: 'hal' });
+        } else if (type === 'CH3') {
+          const p = C.clone().add(dir.clone().multiplyScalar(1.54));
+          stick(C, p, bondMat, 0.08); sphere(p, 0.28, mC);
+          methylHs(p, C).forEach(h => { stick(p, h, mB, 0.045); sphere(h, 0.15, mH); });
+          labelItems.push({ p: p.clone().add(dir.clone().multiplyScalar(0.95)), t: 'CH₃ (' + role + ')', cls });
+        } else {
+          const p = C.clone().add(dir.clone().multiplyScalar(1.05));
+          stick(C, p, bondMat, faded ? 0.04 : 0.06); sphere(p, faded ? 0.14 : 0.19, faded ? mHf : mH);
+          if (!faded) labelItems.push({ p: p.clone().add(dir.clone().multiplyScalar(0.48)), t: 'H (' + role + ')', cls });
+        }
+      });
+    });
+  }
+
+  let labelEls = [];
+  function renderLabels() {
+    if (!hasGL || !S.labels) { labelsEl.hidden = true; return; }
+    labelsEl.hidden = false;
+    while (labelEls.length < labelItems.length) { const d = document.createElement('div'); labelsEl.appendChild(d); labelEls.push(d); }
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const c1 = ringPos(PR().F, S.flip), c2 = ringPos(PR().B, S.flip);
+    const look = controls.target.clone().sub(camera.position).normalize();
+    const downBond = look.dot(c2.clone().sub(c1).normalize()) > 0.95;
+    labelEls.forEach((el, i) => {
+      const it = labelItems[i];
+      if (!it || (it.carbon && downBond)) { el.hidden = true; return; }
+      const p = it.p.clone().project(camera);
+      if (p.z > 1) { el.hidden = true; return; }
+      el.hidden = false;
+      el.className = 'lbl ' + it.cls; if (el.textContent !== it.t) el.textContent = it.t;
+      el.style.left = ((p.x + 1) / 2 * w) + 'px'; el.style.top = ((1 - p.y) / 2 * h) + 'px';
+    });
+  }
+
+  function poses() {
+    const c1 = ringPos(PR().F, S.flip), c2 = ringPos(PR().B, S.flip);
+    return {
+      chair: { t: v(c1.x > 0 ? 0.45 : -0.45, 0.15, 0), d: v(0, 3.0, 9.4).normalize(), L: 11.8 },
+      newman: { t: c1.clone().add(c2).multiplyScalar(0.5), d: c1.clone().sub(c2).normalize(), L: 12.5 },
+      side: v(c1.x > 0 ? 1 : -1, 0.55, 0.15).normalize()
+    };
+  }
+  const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  function applyCamera() {
+    if (!hasGL || S.free) return;
+    const p = poses(), e = ease(S.head);
+    const t = p.chair.t.clone().lerp(p.newman.t, e);
+    let d;
+    if (p.chair.d.dot(p.newman.d) < 0.1) {
+      d = e < 0.5 ? p.chair.d.clone().lerp(p.side, e * 2) : p.side.clone().lerp(p.newman.d, (e - 0.5) * 2);
+    } else d = p.chair.d.clone().lerp(p.newman.d, e);
+    d.normalize();
+    const L = p.chair.L + (p.newman.L - p.chair.L) * e;
+    camera.position.copy(t.clone().add(d.multiplyScalar(L)));
+    controls.target.copy(t); camera.lookAt(t);
+  }
+  function setTag() {
+    const tag = document.getElementById('viewtag');
+    const dirTxt = S.preset === 'ex1' ? ' (into the page)' : ' (out of the page)';
+    if (S.free) tag.textContent = 'free view, press a view button to snap back';
+    else if (S.head > 0.98) tag.textContent = 'looking straight down C1 → C2' + dirTxt;
+    else if (S.head < 0.02) tag.textContent = 'chair view' + (S.flip < 0 ? ', after ring flip' : '');
+    else tag.textContent = 'turning your head… ' + Math.round(S.head * 100) + '%';
+  }
+
+  let headAnim = null, flipAnim = null;
+  function goHead(target) {
+    S.free = false;
+    if (reduce) { S.head = target; syncSlider(); return; }
+    const from = S.head, t0 = performance.now(), dur = 700 + 700 * Math.abs(target - from);
+    headAnim = now => { const k = Math.min(1, (now - t0) / dur); S.head = from + (target - from) * k; syncSlider(); if (k >= 1) headAnim = null; };
+  }
+  function syncSlider() { document.getElementById('head').value = Math.round(S.head * 100); setTag(); }
+  document.getElementById('btnChair').onclick = () => goHead(0);
+  document.getElementById('btnNewman').onclick = () => goHead(1);
+  document.getElementById('head').oninput = e => { headAnim = null; S.free = false; S.head = +e.target.value / 100; setTag(); };
+  function setPreset(id) {
+    if (flipAnim) return;
+    S.preset = id; S.flip = 1; S.head = 0; S.free = false; headAnim = null; syncSlider();
+    document.getElementById('ex1').setAttribute('aria-pressed', String(id === 'ex1'));
+    document.getElementById('ex2').setAttribute('aria-pressed', String(id === 'ex2'));
+    const hal = PR().hal; document.getElementById('legHal').innerHTML = '<i style="background:' + hal[0] + '"></i>' + hal[1];
+    build(); updatePanel();
+  }
+  document.getElementById('ex1').onclick = () => setPreset('ex1');
+  document.getElementById('ex2').onclick = () => setPreset('ex2');
+  document.getElementById('btnFlip').onclick = () => {
+    if (flipAnim) return;
+    const from = S.flip, to = from > 0 ? -1 : 1;
+    if (reduce) { S.flip = to; build(); updatePanel(); setTag(); return; }
+    const t0 = performance.now();
+    document.getElementById('state').innerHTML = '<span class="pill">flipping…</span>';
+    flipAnim = now => { const k = Math.min(1, (now - t0) / 1100); S.flip = from + (to - from) * ease(k); build();
+      if (k >= 1) { S.flip = to; flipAnim = null; build(); updatePanel(); setTag(); } };
+  };
+  document.getElementById('btnH').onclick = e => { S.allH = !S.allH; e.target.textContent = S.allH ? "Other H's on" : "Other H's off"; e.target.setAttribute('aria-pressed', String(S.allH)); build(); };
+  document.getElementById('btnLabels').onclick = e => { S.labels = !S.labels; e.target.textContent = S.labels ? 'Labels on' : 'Labels off'; e.target.setAttribute('aria-pressed', String(S.labels)); renderLabels(); };
+
+  // Paper Newman, worked out from the same 3D geometry and snapped to clean 120° spacing
+  function newmanItems() {
+    const s = S.flip, pr = PR();
+    const c1 = ringPos(pr.F, s), c2 = ringPos(pr.B, s);
+    const f = c2.clone().sub(c1).normalize();
+    const right = f.clone().cross(v(0, 1, 0)).normalize();
+    const upv = right.clone().cross(f).normalize();
+    const out = [];
+    [[pr.F, 'front'], [pr.B, 'back']].forEach(([k, side]) => {
+      const d = groupDirs(k, s), sub = pr.subs[k];
+      const ax = d.upAxial ? { t: sub.up, dir: d.up } : { t: sub.dn, dir: d.dn };
+      const eq = d.upAxial ? { t: sub.dn, dir: d.dn } : { t: sub.up, dir: d.up };
+      const A = ax.dir.dot(upv) > 0 ? 0 : 180;
+      const cand = [norm(A + 120), norm(A - 120)];
+      const rightAng = cand.find(a => Math.sin(a * Math.PI / 180) > 0), leftAng = cand.find(a => a !== rightAng);
+      const eqRight = eq.dir.dot(right) > 0;
+      out.push({ side, t: ax.t, role: 'axial', a: A });
+      out.push({ side, t: eq.t, role: 'equatorial', a: eqRight ? rightAng : leftAng });
+      out.push({ side, t: 'ring', role: 'ring', a: eqRight ? leftAng : rightAng });
+    });
+    return out;
+  }
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+  const nice = t => t === 'CH3' ? 'CH₃' : t;
+  function updatePanel() {
+    const items = newmanItems();
+    const svg = document.getElementById('newman'); svg.innerHTML = '';
+    const R = 50, L = 96, fc = css('--c1'), bc = css('--c2'), rc = css('--ring');
+    const pt = (a, r) => [Math.sin(a * Math.PI / 180) * r, -Math.cos(a * Math.PI / 180) * r];
+    const draw = (it, start, color) => {
+      const [x1, y1] = start ? pt(it.a, start) : [0, 0], [x2, y2] = pt(it.a, L), [tx, ty] = pt(it.a, L + 22);
+      const ring = it.t === 'ring';
+      el('line', { x1, y1, x2, y2, stroke: ring ? rc : color, 'stroke-width': ring ? 2.5 : 3, 'stroke-linecap': 'round', 'stroke-dasharray': ring ? '6 5' : 'none' }, svg);
+      const t = el('text', { x: tx, y: ty + 5, 'text-anchor': 'middle', fill: ring ? rc : color, 'font-family': 'IBM Plex Mono, monospace', 'font-size': ring ? 12 : 15 }, svg);
+      t.textContent = ring ? 'ring' : nice(it.t);
+    };
+    items.filter(i => i.side === 'back').forEach(i => draw(i, R, bc));
+    el('circle', { cx: 0, cy: 0, r: R, fill: 'none', stroke: bc, 'stroke-width': 2.5 }, svg);
+    items.filter(i => i.side === 'front').forEach(i => draw(i, 0, fc));
+    el('circle', { cx: 0, cy: 0, r: 4, fill: fc }, svg);
+
+    const state = document.getElementById('state'); state.innerHTML = '';
+    const pill = (txt, cls) => { const s = document.createElement('span'); s.className = 'pill ' + cls; s.textContent = txt; state.appendChild(s); };
+    pill((S.preset === 'ex1' ? 'example 1' : 'example 2') + (S.flip > 0 ? ', chair 1' : ', flipped'), '');
+    pill('dot = C1, front', 'c1'); pill('circle = C2, back', 'c2');
+
+    const read = document.getElementById('read'); read.innerHTML = '';
+    items.filter(i => i.t !== 'ring').forEach(i => {
+      const li = document.createElement('li'); li.className = i.side === 'front' ? 'f' : 'b';
+      li.innerHTML = '<b>' + nice(i.t) + '</b> on ' + (i.side === 'front' ? 'C1 (front)' : 'C2 (back)') + ', ' + i.role + ': <span class="mono">' + clock(i.a) + '</span>';
+      read.appendChild(li);
+    });
+    const li = document.createElement('li'); li.style.color = 'var(--muted)';
+    const fr = items.find(i => i.side === 'front' && i.t === 'ring'), br = items.find(i => i.side === 'back' && i.t === 'ring');
+    li.innerHTML = 'ring bonds: front at <span class="mono">' + clock(fr.a) + '</span>, back at <span class="mono">' + clock(br.a) + '</span>, both toward the rest of the ring';
+    read.appendChild(li);
+  }
+
+  function resize() {
+    if (!hasGL) return;
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  function setBg() { if (hasGL) renderer.setClearColor(new THREE.Color(css('--scene')), 1); }
+  function loop(now) {
+    if (headAnim) headAnim(now);
+    if (flipAnim) flipAnim(now);
+    if (hasGL) { applyCamera(); renderer.render(scene, camera); renderLabels(); }
+    requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', resize);
+  const retheme = () => { setBg(); build(); updatePanel(); };
+  const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq && mq.addEventListener) mq.addEventListener('change', retheme);
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  resize(); setBg(); build(); updatePanel(); setTag(); requestAnimationFrame(loop);
+})();
+</script>
+
+</html>

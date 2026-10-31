@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bond Rotation Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a model-kit bench. 3D model on the left, the paper Newman drawing and readouts on the right, one control strip under the model. */
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6875;
+  --line: #d3dae1;
+  --front: #1b232c;
+  --back: #2457b3;
+  --warn: #c0392b;
+  --good: #1e7d4f;
+  --accent: #b86e00;
+  --scene: #f7f9fb;
+  --hatom: #f4f4f1;
+  --atom-front: #1b232c;
+  --atom-back: #2457b3;
+  --atom-bond: #6b7785;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141a; --panel: #161d25; --ink: #e5ebf1; --muted: #93a1af; --line: #2a3541;
+    --front: #c9d2dc; --back: #7ea8ff; --warn: #ff7a6b; --good: #5fd39a; --accent: #f2b24c;
+    --scene: #dfe5eb; --hatom: #ffffff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141a; --panel: #161d25; --ink: #e5ebf1; --muted: #93a1af; --line: #2a3541;
+  --front: #c9d2dc; --back: #7ea8ff; --warn: #ff7a6b; --good: #5fd39a; --accent: #f2b24c;
+  --scene: #dfe5eb; --hatom: #ffffff; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 18px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px; }
+header { display: grid; gap: 4px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 1.7rem; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 70ch; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.stage { position: relative; height: 470px; overflow: hidden; border-radius: 10px 10px 0 0; background: var(--scene); }
+@media (max-width: 560px) { .stage { height: 360px; } }
+#gl { display: block; width: 100%; height: 100%; touch-action: none; }
+#labels { position: absolute; inset: 0; pointer-events: none; }
+.lbl { position: absolute; transform: translate(-50%, -50%); font-family: var(--mono); font-size: 12px; font-weight: 500;
+  padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 82%, transparent); white-space: nowrap; }
+.lbl { color: #17212b; background: rgba(255,255,255,0.82); }
+.lbl.front { color: #1b232c; }
+.lbl.back { color: #2457b3; }
+.legend { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 12px; font: 500 12px var(--body); color: #17212b; background: rgba(255,255,255,0.85); border-radius: 6px; padding: 3px 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.lbl.carbon { font-family: var(--display); font-size: 12.5px; font-weight: 600; }
+.viewtag { position: absolute; left: 10px; top: 10px; font-family: var(--mono); font-size: 12px; color: #4b5763;
+  background: rgba(255,255,255,0.85); border: 1px solid #c9d1d9; border-radius: 6px; padding: 3px 8px; }
+.controls { display: grid; gap: 10px; padding: 12px; border-top: 1px solid var(--line); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, select { font: 500 0.92rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 7px; padding: 7px 11px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--back); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--back); border-color: var(--back); color: var(--panel); }
+label.slider { display: flex; gap: 10px; align-items: center; flex: 1 1 260px; min-width: 0; font-size: 0.9rem; color: var(--muted); }
+input[type=range] { flex: 1; min-width: 0; accent-color: var(--back); }
+.side { display: grid; gap: 14px; }
+.side .card { padding: 12px 14px; display: grid; gap: 8px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 1.05rem; margin: 0; letter-spacing: 0.02em; }
+.cap { font-size: 0.82rem; color: var(--muted); margin: 0; }
+#newman { width: 100%; max-width: 300px; height: auto; justify-self: center; }
+.state { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font: 600 0.78rem var(--display); letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); }
+.pill.good { color: var(--good); border-color: var(--good); }
+.pill.warn { color: var(--warn); border-color: var(--warn); }
+.pill.neutral { color: var(--muted); }
+.pairs { margin: 0; padding-left: 18px; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.pairs li { margin: 2px 0; }
+.pairs .gauche, .pairs .ecl { color: var(--warn); }
+.pairs .anti { color: var(--good); }
+#energy { width: 100%; height: auto; }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 0.93rem; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.note { font-size: 0.8rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Bond Rotation Lab</h1>
+    <p class="sub">A 3D model of butane and 2-methylbutane. Drag to turn the model, scroll or pinch to zoom, and spin the back carbon while the paper Newman drawing updates with it. In the model, black is the front carbon (C2) and blue is the back carbon (C3).</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="stage">
+        <canvas id="gl" aria-label="3D ball-and-stick model"></canvas>
+        <div id="labels"></div>
+        <div class="viewtag" id="viewtag">side view</div>
+        <div class="legend" aria-hidden="true"><span><i style="background:#1b232c"></i>C2, front</span><span><i style="background:#2457b3"></i>C3, back</span><span><i style="background:#fff;border:1px solid #9aa5b1"></i>H</span></div>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <select id="preset" aria-label="Molecule">
+            <option value="butane">Butane, down C2 to C3</option>
+            <option value="methylbutane">2-Methylbutane, down C2 to C3</option>
+          </select>
+          <button id="btnNewman" class="primary">Newman view</button>
+          <button id="btnSide">Side view</button>
+          <button id="btnLabels" aria-pressed="true">Labels on</button>
+        </div>
+        <div class="row">
+          <button id="btn120">Rotate back carbon 120° clockwise</button>
+          <button id="btn60">60° (see eclipsed)</button>
+          <button id="btnReset">Reset</button>
+          <label class="slider" for="theta">Back carbon turned <input id="theta" type="range" min="0" max="360" step="1" value="0"><span class="mono" id="thetaOut">0°</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2>What you would draw on paper</h2>
+        <svg id="newman" viewBox="-150 -150 300 300" role="img" aria-label="Newman projection"></svg>
+        <div class="state" id="state"></div>
+        <ul class="pairs" id="pairs"></ul>
+      </div>
+      <div class="card">
+        <h2>Strain as the back carbon turns</h2>
+        <svg id="energy" viewBox="0 0 320 150" role="img" aria-label="Strain versus rotation"></svg>
+        <p class="note">Shape only, approximate. The course asks you to rank conformers, not to calculate energies.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:12px 14px; display:grid; gap:8px;">
+    <h2>Guided run, about 5 minutes</h2>
+    <ol class="steps">
+      <li>Press <b>Side view</b>. Find C2 (black) and C3 (blue). The bond between them is the one you look down.</li>
+      <li>Press <b>Newman view</b>. You are now looking straight down C2 to C3. C2's three bonds meet at the center, C3 is hidden behind it and its bonds poke out from behind. Compare the 3D model with the paper drawing.</li>
+      <li>Press <b>Rotate back carbon 120° clockwise</b> three times. The front stays still. The blue CH<sub>3</sub> walks 6 → 10 → 2 → 6 o'clock. Watch the pills: anti, gauche, gauche.</li>
+      <li>Press <b>60°</b> once. Every back bond now hides behind a front bond. That is eclipsed, and the strain plot jumps.</li>
+      <li>Switch to <b>2-Methylbutane</b>, reset, and step through the three staggered conformers again. Count the red gauche pairs in each and rank them. The one with the most big-group gauche pairs is the least stable.</li>
+      <li>Drag the model sideways while in Newman view to see the same shape from an angle, then press Newman view again to snap back.</li>
+    </ol>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const PRESETS = {
+    butane: {
+      front: [{ a: 0, t: 'CH3' }, { a: 120, t: 'H' }, { a: 240, t: 'H' }],
+      back:  [{ a: 180, t: 'CH3' }, { a: 300, t: 'H' }, { a: 60, t: 'H' }]
+    },
+    methylbutane: {
+      front: [{ a: 0, t: 'CH3' }, { a: 120, t: 'CH3' }, { a: 240, t: 'H' }],
+      back:  [{ a: 180, t: 'CH3' }, { a: 300, t: 'H' }, { a: 60, t: 'H' }]
+    }
+  };
+  const clockName = a => { const h = Math.round((((a % 360) + 360) % 360) / 30) % 12; return (h === 0 ? 12 : h) + " o'clock"; };
+  const norm = a => ((a % 360) + 360) % 360;
+  const sep = (a, b) => { const d = Math.abs(norm(a) - norm(b)); return d > 180 ? 360 - d : d; };
+
+  let preset = 'butane';
+  let theta = 0;
+  let showLabels = true;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  // --- 3D setup ---
+  const canvas = document.getElementById('gl');
+  const stage = canvas.parentElement;
+  const labelsEl = document.getElementById('labels');
+  if (!window.THREE) { stage.insertAdjacentHTML('beforeend', '<p style="position:absolute;inset:auto 12px 12px 12px" class="note">The 3D library did not load. Reload the page; the drawing on the right still works.</p>'); }
+  const renderer = window.THREE ? new THREE.WebGLRenderer({ canvas, antialias: true }) : null;
+  const scene = window.THREE ? new THREE.Scene() : null;
+  const camera = window.THREE ? new THREE.PerspectiveCamera(38, 1, 0.1, 100) : null;
+  let controls = null;
+  const molecule = window.THREE ? new THREE.Group() : null;
+  if (renderer) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.75); d1.position.set(-5, 6, -7); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xffffff, 0.35); d2.position.set(6, -3, 5); scene.add(d2);
+    scene.add(molecule);
+    camera.position.set(-9.6, 2, 0.2);
+    controls = new THREE.OrbitControls(camera, canvas);
+    controls.enableDamping = true; controls.target.set(0, 0, 0); controls.minDistance = 4; controls.maxDistance = 16;
+  }
+
+  const CC = 1.54, CH = 1.09, TET = 109.47 * Math.PI / 180;
+  const v = (x, y, z) => new THREE.Vector3(x, y, z);
+  // clock angle a (degrees, clockwise from 12 as seen from the front, camera on -z) -> world direction in the xy plane
+  const radial = a => { const r = a * Math.PI / 180; return v(-Math.sin(r), Math.cos(r), 0); };
+  function subDir(a, side) { // side -1 front carbon (bond points away from +z), +1 back
+    const rr = radial(a).multiplyScalar(Math.sin(Math.PI - TET));
+    return v(rr.x, rr.y, side * Math.cos(Math.PI - TET)).normalize();
+  }
+  const mats = {};
+  function mat(key, color) {
+    if (!mats[key]) mats[key] = new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.05 });
+    else mats[key].color.set(color);
+    return mats[key];
+  }
+  function sphere(pos, r, m) { const s = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 20), m); s.position.copy(pos); molecule.add(s); return s; }
+  function stick(a, b, m, rad = 0.09) {
+    const dir = b.clone().sub(a); const len = dir.length();
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 16), m);
+    c.position.copy(a.clone().add(b).multiplyScalar(0.5));
+    c.quaternion.setFromUnitVectors(v(0, 1, 0), dir.normalize()); molecule.add(c); return c;
+  }
+  function methylHs(cMe, cParent) {
+    const u = cMe.clone().sub(cParent).normalize();
+    let p = Math.abs(u.z) < 0.9 ? v(0, 0, 1) : v(1, 0, 0);
+    const e1 = p.clone().cross(u).normalize(); const e2 = u.clone().cross(e1).normalize();
+    const out = [];
+    for (let k = 0; k < 3; k++) {
+      const ph = k * 2 * Math.PI / 3 + 0.4;
+      const dir = u.clone().multiplyScalar(Math.cos(Math.PI - TET)).add(e1.clone().multiplyScalar(Math.sin(Math.PI - TET) * Math.cos(ph))).add(e2.clone().multiplyScalar(Math.sin(Math.PI - TET) * Math.sin(ph)));
+      out.push(cMe.clone().add(dir.multiplyScalar(CH)));
+    }
+    return out;
+  }
+  let labelItems = [];
+  let warnLines = [];
+  function build() {
+    if (!renderer) return;
+    while (molecule.children.length) { const o = molecule.children[molecule.children.length - 1]; molecule.remove(o); if (o.geometry) o.geometry.dispose(); }
+    labelItems = []; warnLines = [];
+    const P = PRESETS[preset];
+    const front = css('--atom-front'), back = css('--atom-back'), hcol = css('--hatom');
+    const mF = mat('f', front), mB = mat('b', back), mH = mat('h', hcol), mBond = mat('bond', css('--atom-bond'));
+    const C2 = v(0, 0, -CC / 2), C3 = v(0, 0, CC / 2);
+    sphere(C2, 0.36, mF); sphere(C3, 0.36, mB); stick(C2, C3, mBond, 0.11);
+    labelItems.push({ p: C2.clone().add(v(0, -0.62, -0.25)), t: 'C2 front', cls: 'front carbon', carbon: true });
+    labelItems.push({ p: C3.clone().add(v(0, -0.62, 0.25)), t: 'C3 back', cls: 'back carbon', carbon: true });
+    const groups = [];
+    [['front', -1, C2, mF], ['back', 1, C3, mB]].forEach(([side, sg, C, m]) => {
+      P[side].forEach(g => {
+        const a = side === 'back' ? g.a + theta : g.a;
+        const d = subDir(a, sg);
+        if (g.t === 'CH3') {
+          const cMe = C.clone().add(d.clone().multiplyScalar(CC));
+          sphere(cMe, 0.33, m); stick(C, cMe, m, 0.1);
+          methylHs(cMe, C).forEach(h => { sphere(h, 0.2, mH); stick(cMe, h, mBond, 0.055); });
+          labelItems.push({ p: cMe.clone().add(d.clone().multiplyScalar(1.05)), t: 'CH₃', cls: side });
+          groups.push({ side, a, t: g.t, pos: cMe });
+        } else {
+          const h = C.clone().add(d.clone().multiplyScalar(CH));
+          sphere(h, 0.22, mH); stick(C, h, m, 0.07);
+          labelItems.push({ p: h.clone().add(d.clone().multiplyScalar(0.5)), t: 'H', cls: side });
+          groups.push({ side, a, t: g.t, pos: h });
+        }
+      });
+    });
+    // red bump lines between big groups that are gauche or eclipsed
+    const warn = new THREE.LineDashedMaterial({ color: css('--warn'), dashSize: 0.12, gapSize: 0.08 });
+    groups.filter(g => g.side === 'front' && g.t !== 'H').forEach(f => {
+      groups.filter(g => g.side === 'back' && g.t !== 'H').forEach(b => {
+        if (sep(f.a, b.a) < 90) {
+          const geo = new THREE.BufferGeometry().setFromPoints([f.pos, b.pos]);
+          const line = new THREE.Line(geo, warn); line.computeLineDistances(); molecule.add(line);
+        }
+      });
+    });
+    renderLabels();
+  }
+  let labelEls = [];
+  function renderLabels() {
+    if (!showLabels || !renderer) { labelsEl.style.display = 'none'; return; }
+    labelsEl.style.display = '';
+    while (labelEls.length < labelItems.length) { const d = document.createElement('div'); labelsEl.appendChild(d); labelEls.push(d); }
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const axial = Math.abs(camera.position.clone().normalize().z) > 0.85;
+    labelEls.forEach((el, i) => {
+      const it = labelItems[i];
+      if (!it || (it.carbon && axial)) { el.style.display = 'none'; return; }
+      const p = it.p.clone().project(camera);
+      if (p.z > 1) { el.style.display = 'none'; return; }
+      el.style.display = '';
+      el.className = 'lbl ' + it.cls; if (el.textContent !== it.t) el.textContent = it.t;
+      el.style.left = ((p.x + 1) / 2 * w) + 'px'; el.style.top = ((1 - p.y) / 2 * h) + 'px';
+    });
+  }
+  function resize() {
+    if (!renderer) return;
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  function setSceneBg() { if (renderer) renderer.setClearColor(new THREE.Color(css('--scene')), 1); }
+
+  // camera moves
+  let camAnim = null;
+  function moveCamera(xyz, tag) {
+    document.getElementById('viewtag').textContent = tag;
+    if (!renderer) return;
+    const to = v(xyz[0], xyz[1], xyz[2]);
+    const from = camera.position.clone();
+    if (reduce) { camera.position.copy(to); controls.update(); return; }
+    const t0 = performance.now(); camAnim = now => {
+      const k = Math.min(1, (now - t0) / 650); const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      camera.position.copy(from.clone().lerp(to, e)); if (k >= 1) camAnim = null;
+    };
+  }
+  document.getElementById('btnNewman').onclick = () => moveCamera([0, 0, -11.5], 'Newman view, looking down C2 to C3');
+  document.getElementById('btnSide').onclick = () => moveCamera([-9.6, 2, 0.2], 'side view');
+
+  // rotation
+  let rotAnim = null;
+  function setTheta(t) { theta = norm(t); document.getElementById('theta').value = Math.round(theta) % 360; document.getElementById('thetaOut').textContent = Math.round(theta) + '°'; build(); updatePanel(); }
+  function rotateBy(delta) {
+    if (reduce) { setTheta(theta + delta); return; }
+    const start = theta, t0 = performance.now();
+    rotAnim = now => { const k = Math.min(1, (now - t0) / 700); const e = 1 - Math.pow(1 - k, 3); setTheta(start + delta * e); if (k >= 1) { rotAnim = null; setTheta(Math.round(start + delta)); } };
+  }
+  document.getElementById('btn120').onclick = () => { if (!rotAnim) rotateBy(120); };
+  document.getElementById('btn60').onclick = () => { if (!rotAnim) rotateBy(60); };
+  document.getElementById('btnReset').onclick = () => setTheta(0);
+  document.getElementById('theta').oninput = e => setTheta(+e.target.value);
+  document.getElementById('preset').onchange = e => { preset = e.target.value; setTheta(0); };
+  document.getElementById('btnLabels').onclick = e => { showLabels = !showLabels; e.target.textContent = showLabels ? 'Labels on' : 'Labels off'; e.target.setAttribute('aria-pressed', String(showLabels)); renderLabels(); };
+
+  // energy model (qualitative): eclipsing torsion for every pair, plus a gauche bump for big/big pairs
+  const ECL = { 'H-H': 1.0, 'H-CH3': 1.4, 'CH3-H': 1.4, 'CH3-CH3': 2.6 };
+  function energyAt(th) {
+    const P = PRESETS[preset]; let E = 0;
+    P.front.forEach(f => P.back.forEach(b => {
+      const d = sep(f.a, b.a + th);
+      E += ECL[f.t + '-' + b.t] * Math.exp(-Math.pow(d / 24, 2));
+      if (f.t !== 'H' && b.t !== 'H') E += 0.9 * Math.exp(-Math.pow((d - 60) / 22, 2));
+    }));
+    return E;
+  }
+
+  // 2D Newman + readouts
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent) { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+  function updatePanel() {
+    const P = PRESETS[preset];
+    const svg = document.getElementById('newman'); svg.innerHTML = '';
+    const R = 52, L = 98, front = css('--front'), back = css('--back'), ink = css('--ink');
+    const pt = (a, r) => [Math.sin(a * Math.PI / 180) * r, -Math.cos(a * Math.PI / 180) * r];
+    const nudge = Math.abs((norm(theta) % 120) - 60) < 4 ? 14 : 0;
+    P.back.forEach(g => { const a = g.a + theta + nudge; const [x1, y1] = pt(a, R), [x2, y2] = pt(a, L), [tx, ty] = pt(a, L + 22);
+      el('line', { x1, y1, x2, y2, stroke: back, 'stroke-width': 3, 'stroke-linecap': 'round' }, svg);
+      const t = el('text', { x: tx, y: ty + 5, 'text-anchor': 'middle', fill: back, 'font-family': 'IBM Plex Mono, monospace', 'font-size': 15 }, svg); t.textContent = g.t === 'CH3' ? 'CH₃' : 'H'; });
+    el('circle', { cx: 0, cy: 0, r: R, fill: 'none', stroke: ink, 'stroke-width': 2.5 }, svg);
+    P.front.forEach(g => { const [x2, y2] = pt(g.a, L), [tx, ty] = pt(g.a, L + 22);
+      el('line', { x1: 0, y1: 0, x2, y2, stroke: front, 'stroke-width': 3, 'stroke-linecap': 'round' }, svg);
+      const t = el('text', { x: tx, y: ty + 5, 'text-anchor': 'middle', fill: front, 'font-family': 'IBM Plex Mono, monospace', 'font-size': 15 }, svg); t.textContent = g.t === 'CH3' ? 'CH₃' : 'H'; });
+    el('circle', { cx: 0, cy: 0, r: 3.5, fill: front }, svg);
+
+    // state pills
+    const off = norm(theta) % 120;
+    const staggered = Math.abs(off) < 4 || Math.abs(off - 120) < 4;
+    const eclipsed = Math.abs(off - 60) < 4;
+    const state = document.getElementById('state'); state.innerHTML = '';
+    const pill = (txt, cls) => { const s = document.createElement('span'); s.className = 'pill ' + cls; s.textContent = txt; state.appendChild(s); };
+    pill(staggered ? 'staggered' : eclipsed ? 'eclipsed' : 'in between', staggered ? 'good' : eclipsed ? 'warn' : 'neutral');
+
+    const pairs = document.getElementById('pairs'); pairs.innerHTML = '';
+    let g = 0, an = 0, ec = 0;
+    P.front.filter(f => f.t !== 'H').forEach(f => P.back.filter(b => b.t !== 'H').forEach(b => {
+      const d = Math.round(sep(f.a, b.a + theta));
+      const kind = d >= 170 ? 'anti' : (d >= 50 && d <= 70) ? 'gauche' : d <= 10 ? 'ecl' : '';
+      if (kind === 'anti') an++; if (kind === 'gauche') g++; if (kind === 'ecl') ec++;
+      const li = document.createElement('li'); li.className = kind;
+      li.textContent = `front CH₃ (${clockName(f.a)}) and back CH₃ (${clockName(b.a + theta)}): ${d}° apart${kind === 'anti' ? ', anti' : kind === 'gauche' ? ', gauche, they bump' : kind === 'ecl' ? ', eclipsed, worst' : ''}`;
+      pairs.appendChild(li);
+    }));
+    if (staggered) pill(g + ' big-group gauche pair' + (g === 1 ? '' : 's'), g ? 'warn' : 'good');
+    if (an) pill(an + ' anti', 'good');
+
+    // energy plot
+    const E = document.getElementById('energy'); E.innerHTML = '';
+    const W = 320, H = 150, padL = 30, padB = 22, padT = 10;
+    const xs = th => padL + th / 360 * (W - padL - 20);
+    let maxE = 0; for (let t = 0; t <= 360; t += 2) maxE = Math.max(maxE, energyAt(t));
+    const ys = e => padT + (1 - e / (maxE * 1.08)) * (H - padT - padB);
+    const muted = css('--muted'), line = css('--line');
+    [0, 60, 120, 180, 240, 300, 360].forEach(t => {
+      el('line', { x1: xs(t), y1: padT, x2: xs(t), y2: H - padB, stroke: line, 'stroke-width': 1 }, E);
+      const tx = el('text', { x: xs(t), y: H - 6, 'text-anchor': 'middle', fill: muted, 'font-size': 10, 'font-family': 'IBM Plex Mono, monospace' }, E); tx.textContent = t + '°';
+    });
+    const yl = el('text', { x: 6, y: padT + 10, fill: muted, 'font-size': 10, 'font-family': 'IBM Plex Sans, sans-serif' }, E); yl.textContent = 'strain';
+    let d = ''; for (let t = 0; t <= 360; t += 2) d += (t ? 'L' : 'M') + xs(t).toFixed(1) + ' ' + ys(energyAt(t)).toFixed(1);
+    el('path', { d, fill: 'none', stroke: css('--back'), 'stroke-width': 2 }, E);
+    el('circle', { cx: xs(norm(theta)), cy: ys(energyAt(norm(theta))), r: 5, fill: css('--accent'), stroke: css('--panel'), 'stroke-width': 1.5 }, E);
+  }
+
+  function loop(now) {
+    if (camAnim) camAnim(now);
+    if (rotAnim) rotAnim(now);
+    if (controls) controls.update();
+    if (renderer) { renderer.render(scene, camera); renderLabels(); }
+    requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', () => { resize(); renderLabels(); });
+  const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  const retheme = () => { setSceneBg(); build(); updatePanel(); };
+  if (mq && mq.addEventListener) mq.addEventListener('change', retheme);
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  resize(); setSceneBg(); build(); updatePanel(); requestAnimationFrame(loop);
+})();
+</script>
+
+</html>
