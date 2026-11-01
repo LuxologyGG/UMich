@@ -91,12 +91,12 @@ function updateBar(gainEl) {
 let F = null;
 function newFlow(focus) { F = { focus: focus || null, round: null, primed: {}, introduced: {}, intro: null, cold: {}, requeue: [], lastTag: null, lastUnit: null, recent: [], done: 0, right: 0, streak: 0, best: 0, specials: 0, forceUnit: null, t0: now(), rounds: 0 }; }
 function newRound() {
-  const pool0 = (F.focus ? [UNIT[F.focus]] : D.units).map(u => ({ id: u.id, open: u.weight * (1 - unitMastery(u.id)), live: openTags(u.id).length }));
+  const pool0 = (F.focus ? F.focus.map(u => UNIT[u]) : D.units).map(u => ({ id: u.id, open: u.weight * (1 - unitMastery(u.id)), live: openTags(u.id).length }));
   let pool = pool0.filter(c => c.live > 0); if (!pool.length) pool = pool0;
   pool.sort((a, b) => b.open - a.open);
-  const units = pool.slice(0, F.focus ? 1 : 3).map(c => c.id);
+  const units = pool.slice(0, 3).map(c => c.id);
   F.rounds++;
-  F.round = { units, qn: 0, cap: F.focus ? 14 : 18, rot: 0, sinceSpecial: 0, startProj: projected(), startM: Object.fromEntries(units.map(u => [u, unitMastery(u)])), keep: pool.length === pool0.length && !pool0.some(c => c.live) };
+  F.round = { units, qn: 0, cap: F.focus && F.focus.length === 1 ? 14 : 18, rot: 0, sinceSpecial: 0, startProj: projected(), startM: Object.fromEntries(units.map(u => [u, unitMastery(u)])), keep: pool.length === pool0.length && !pool0.some(c => c.live) };
 }
 function chooseItem(unit, tag) {
   const pool = BYTAG[unit + '|' + tag] || [];
@@ -605,7 +605,8 @@ function route() {
   const raw = (location.hash || '#study').slice(1); const cut = raw.indexOf('-'); const v = cut > 0 ? raw.slice(0, cut) : raw; const arg = cut > 0 ? raw.slice(cut + 1) : null;
   const view = v === 'focus' ? 'study' : v;
   renderBar(view);
-  if (v === 'focus' && UNIT[arg]) { CUR = null; newFlow(arg); viewStudy(arg); }
+  const fu = v === 'focus' ? (arg || '').split('-').filter(u => UNIT[u]) : [];
+  if (fu.length) { CUR = null; newFlow(fu); viewStudy(fu); }
   else if (v === 'overview') viewOverview(); else if (v === 'strategy') viewStrategy(); else if (v === 'progress') viewProgress();
   else viewStudy();
   window.scrollTo(0, 0);
